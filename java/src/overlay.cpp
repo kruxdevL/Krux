@@ -77,6 +77,7 @@ HWND g_gameWindow = nullptr;
 ImFont* g_primordialMedium = nullptr;
 ImFont* g_pixelMenuFont = nullptr;
 ImFont* g_ricoMenuFont = nullptr;
+ImFont* g_arialMenuFont = nullptr;
 krux::fonts::MinecraftImGuiAtlas g_minecraftImGui;
 ImFont* g_primordialBold = nullptr;
 ImFont* g_primordialIcons = nullptr;
@@ -104,7 +105,7 @@ int g_noticeStyle=0,g_noticePosition=4;
 bool g_preferencesSaved = false;
 cold::config::Document g_savedPreferences;
 bool g_clickSound = true;
-float g_textScale = 1.0f;
+float g_textScale = .95f;
 bool g_matchHudTheme = true;
 bool g_hurtCamera = false;
 cold::Color g_menuTextColour=cold::Color::rgb(0xBABABA);
@@ -1189,12 +1190,13 @@ void RenderPrimordialMenu() {
         if(config.getInt("interface","hudThemeRevision",0)<1){g_matchHudTheme=true;manager.config().setBool("interface","matchHud",true);manager.config().setInt("interface","hudThemeRevision",1);}
         g_hurtCamera=config.getBool("interface","hurtCamera",false);
         g_menuTextColour={config.getNumber("interface","menuTextR",.73f),config.getNumber("interface","menuTextG",.73f),config.getNumber("interface","menuTextB",.73f),1};
-        if(config.getInt("interface","classicRevision",0)<4) {
-            manager.config().setInt("interface","classicRevision",4);
+        if(config.getInt("interface","classicRevision",0)<5) {
+            manager.config().setInt("interface","classicRevision",5);
             if(config.getNumber("interface","moduleRowHeight",26)==26)manager.config().setNumber("interface","moduleRowHeight",22,0);
+            if(std::abs(config.getNumber("interface","textScale",1)-1)<.001f)manager.config().setNumber("interface","textScale",.95f,2);
         }
         g_clickSound = config.getBool("interface", "clickSound", true);
-        g_textScale = std::clamp(config.getNumber("interface", "textScale", 1.0f), 0.75f, 2.0f);
+        g_textScale = std::clamp(config.getNumber("interface", "textScale", .95f), 0.75f, 2.0f);
         g_cornerRadius=std::clamp(config.getNumber("interface","cornerRadius",8),0.0f,16.0f);
         g_moduleRowHeight=std::clamp(config.getNumber("interface","moduleRowHeight",22),18.0f,34.0f);
         g_classicColumnWidth=std::clamp(config.getNumber("interface","classicColumnWidth",196),140.f,300.f);
@@ -1524,10 +1526,12 @@ void LoadOriginalMenuAssets() {
     const auto smooth=cold::assets::store().font(cold::assets::FontAsset::InterMedium);
     const auto bold=cold::assets::store().font(cold::assets::FontAsset::InterSemiBold);
     const auto rico=cold::assets::store().font(cold::assets::FontAsset::RicoPixel);
-    g_primordialMedium = smooth.data?io.Fonts->AddFontFromMemoryTTF(const_cast<std::uint8_t*>(smooth.data),int(smooth.size),13.f,&fontConfig,glyphRanges):nullptr;
-    g_primordialBold = bold.data?io.Fonts->AddFontFromMemoryTTF(const_cast<std::uint8_t*>(bold.data),int(bold.size),13.f,&fontConfig,glyphRanges):nullptr;
+    g_primordialMedium = smooth.data?io.Fonts->AddFontFromMemoryTTF(const_cast<std::uint8_t*>(smooth.data),int(smooth.size),12.f,&fontConfig,glyphRanges):nullptr;
+    g_primordialBold = bold.data?io.Fonts->AddFontFromMemoryTTF(const_cast<std::uint8_t*>(bold.data),int(bold.size),12.f,&fontConfig,glyphRanges):nullptr;
     ImFontConfig ricoConfig{};ricoConfig.FontDataOwnedByAtlas=false;
     g_ricoMenuFont=rico.data?io.Fonts->AddFontFromMemoryTTF(const_cast<std::uint8_t*>(rico.data),int(rico.size),10.f,&ricoConfig):nullptr;
+    ImFontConfig arialConfig{};arialConfig.OversampleH=2;arialConfig.OversampleV=2;
+    g_arialMenuFont=io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\arial.ttf",11.f,&arialConfig,glyphRanges);
     g_minecraftImGui.prepare(*io.Fonts);
     g_pixelMenuFont=g_minecraftImGui.font;
     static const ImWchar iconRanges[] = { 0x0020, 0x00FF, 0 };
@@ -1885,7 +1889,7 @@ void RunOverlay(std::atomic_bool& stopRequested) {
                 g_menuBuilt = true;
             }
             const int menuFont=krux::fonts::preference(cold::modules::modules().config(),krux::fonts::Domain::ClickGui);
-            if(menuFont==1&&g_pixelMenuFont)ImGui::GetIO().FontDefault=g_pixelMenuFont;else if(menuFont==2&&g_ricoMenuFont)ImGui::GetIO().FontDefault=g_ricoMenuFont;else if(g_primordialMedium)ImGui::GetIO().FontDefault=g_primordialMedium;
+            if((menuFont==1||menuFont==4)&&g_pixelMenuFont)ImGui::GetIO().FontDefault=g_pixelMenuFont;else if(menuFont==2&&g_ricoMenuFont)ImGui::GetIO().FontDefault=g_ricoMenuFont;else if(menuFont==3&&g_arialMenuFont)ImGui::GetIO().FontDefault=g_arialMenuFont;else if(g_primordialMedium)ImGui::GetIO().FontDefault=g_primordialMedium;
             if (g_menuBuilt) {RenderPrimordialMenu();if(g_interfaceLoaded&&ImGui::IsMouseReleased(ImGuiMouseButton_Left))SaveInterface();}
         }
         if (GImGui->OpenPopupStack.Size > 0 && GImGui->OpenPopupStack.back().Window)

@@ -12,7 +12,7 @@ void RenderClassicPreferenceSettings(bool mainMenu) {
     } else {
         auto& fontConfig=cold::modules::modules().config();
         const std::array<std::pair<const char*,krux::fonts::Domain>,3> fontChoices{{{"ClickGUI font",krux::fonts::Domain::ClickGui},{"HUD font",krux::fonts::Domain::Hud},{"World labels / nametags font",krux::fonts::Domain::WorldLabels}}};
-        for(const auto& [label,domain]:fontChoices){int selected=krux::fonts::preference(fontConfig,domain);const std::string id=std::string("##")+krux::fonts::preferenceKey(domain);if(DrawPrimordialChoice(id.c_str(),label,{"Smooth","Minecraft","Rico pixel"},selected)){fontConfig.setInt("interface",krux::fonts::preferenceKey(domain),selected);SaveInterface();}}
+        for(const auto& [label,domain]:fontChoices){int selected=krux::fonts::preference(fontConfig,domain);const std::string id=std::string("##")+krux::fonts::preferenceKey(domain);if(DrawPrimordialChoice(id.c_str(),label,{"Smooth","Minecraft","Rico pixel","Arial small","Outlined pixel"},selected)){fontConfig.setInt("interface",krux::fonts::preferenceKey(domain),selected);SaveInterface();}}
         if(DrawPrimordialValue("##text-scale","ClickGUI font scale",g_textScale,.75f,2.f,2,1))SaveInterface();
         bool shareUsage=fontConfig.getBool("interface","shareModuleUsage",false);
         if(DrawPrimordialToggle("##share-module-usage","Share module usage",shareUsage)){fontConfig.setBool("interface","shareModuleUsage",shareUsage);krux::usage::setSharing(shareUsage);SaveInterface();}

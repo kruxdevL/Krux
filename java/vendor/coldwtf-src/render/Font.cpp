@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cstring>
 #include <cstdlib>
+#include <filesystem>
+#include <fstream>
 
 #include "assets/AssetStore.hpp"
 #include "core/Log.hpp"
@@ -31,6 +33,7 @@ constexpr assets::FontAsset kRoleAssets[static_cast<std::size_t>(FontRole::Count
     assets::FontAsset::InterSemiBold, assets::FontAsset::InterBold,
     assets::FontAsset::MonoMedium,   assets::FontAsset::MonoBold,
     assets::FontAsset::InterRegular, assets::FontAsset::RicoPixel,
+    assets::FontAsset::InterRegular,
 };
 
 struct Raster {
@@ -133,16 +136,23 @@ bool FontAtlas::build(float atlasPixelHeight) {
     std::vector<Raster> rasters;
     rasters.reserve(wanted.size() * static_cast<std::size_t>(FontRole::Count));
 
+    std::vector<unsigned char> arial;
+    if(const char* windows=std::getenv("WINDIR")) {
+        std::ifstream input(std::filesystem::path(windows)/"Fonts"/"arial.ttf",std::ios::binary);
+        arial.assign(std::istreambuf_iterator<char>(input),{});
+    }
+
     for (std::size_t role = 0; role < static_cast<std::size_t>(FontRole::Count); ++role) {
         if(role==static_cast<std::size_t>(FontRole::Pixel))continue;
         assets::Blob blob = assets::store().font(kRoleAssets[role]);
-        if (blob.data == nullptr) {
+        const auto* fontData=role==static_cast<std::size_t>(FontRole::Arial)&&!arial.empty()?arial.data():blob.data;
+        if (fontData == nullptr) {
             COLD_ERROR(kScope, "font role %zu missing from the resource blob", role);
             continue;
         }
 
         stbtt_fontinfo info;
-        if (stbtt_InitFont(&info, blob.data, stbtt_GetFontOffsetForIndex(blob.data, 0)) == 0) {
+        if (stbtt_InitFont(&info, fontData, stbtt_GetFontOffsetForIndex(fontData, 0)) == 0) {
             COLD_ERROR(kScope, "stbtt_InitFont rejected font role %zu", role);
             continue;
         }

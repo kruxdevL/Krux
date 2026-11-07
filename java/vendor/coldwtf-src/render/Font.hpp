@@ -22,17 +22,19 @@ enum class FontRole : std::uint8_t {
     MonoBold,
     Pixel,
     RicoPixel,
+    Arial,
     Count,
     Hud,
     HudMono,
     WorldLabel,
     PixelScaled,
     HudSmooth,
+    OutlinedPixel,
 };
 
 inline FontRole configuredFontRole(FontRole requested,const config::Document& config) {
     using krux::fonts::Domain;
-    const auto selected=[&](Domain domain,FontRole smooth){const int value=krux::fonts::preference(config,domain);return value==1?FontRole::Pixel:value==2?FontRole::RicoPixel:smooth;};
+    const auto selected=[&](Domain domain,FontRole smooth){const int value=krux::fonts::preference(config,domain);return value==1?FontRole::Pixel:value==2?FontRole::RicoPixel:value==3?FontRole::Arial:value==4?FontRole::OutlinedPixel:smooth;};
     if(requested==FontRole::Hud||requested==FontRole::HudMono)return selected(Domain::Hud,FontRole::Regular);
     if(requested==FontRole::WorldLabel)return selected(Domain::WorldLabels,FontRole::Medium);
     return requested<=FontRole::Bold?selected(Domain::ClickGui,requested):requested;
@@ -101,6 +103,7 @@ public:
     bool ready() const { return texture_ != 0; }
     GLuint texture() const { return texture_; }
     const FontFace& face(FontRole role) const {
+        if(role==FontRole::OutlinedPixel)return faces_[static_cast<std::size_t>(FontRole::Pixel)];
         if(role==FontRole::PixelScaled)return scaledPixelFace_;
         if(role==FontRole::HudSmooth||((role==FontRole::Hud||role==FontRole::HudMono)&&interfaceFontRole(role)==FontRole::Regular))return hudSmoothFace_;
         return faces_[static_cast<std::size_t>(interfaceFontRole(role))];
